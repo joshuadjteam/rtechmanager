@@ -1,35 +1,29 @@
-# rTechManager - Universal Linux Deployment (Debian/Ubuntu/Mint)
-# NO-GIT ONLINE INSTALLATION
+# rTechManager - Clean Install Guide (Node 22 LTS)
+# Port: 1783 | OS: Linux Mint 22+
 
-# 1. Elevate to root
-sudo su
+1. UPGRADE TO NODE 22 (REQUIRED)
+# Mint's default repo usually has Node 18, which is too old for Gemini/Vite.
+sudo apt update
+sudo apt install -y curl
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
 
-# 2. Install System Dependencies
-# libpam0g-dev is CRITICAL for system account authentication
-apt update
-apt install -y nodejs npm tightvncserver websockify build-essential libpam0g-dev wget unzip
+2. INSTALL OTHER SYSTEM DEPENDENCIES
+sudo apt install -y build-essential libpam0g-dev tightvncserver websockify
 
-# 3. Download Source via GitHub ZIP (No Git needed)
-mkdir -p /opt/rtechmanager
+3. PREPARE DIRECTORY
+sudo mkdir -p /opt/rtechmanager
+sudo chown -R $USER:$USER /opt/rtechmanager
 cd /opt/rtechmanager
-wget https://github.com/joshuadjteam/rtechmanager/archive/refs/heads/main.zip -O source.zip
-unzip -j source.zip
-rm source.zip
 
-# 4. Configure Backend
-# This builds the native PAM authentication modules
-npm init -y
-npm install express body-parser authenticate-pam http-proxy
+4. INSTALL NODE PACKAGES
+# This will now succeed without engine warnings.
+npm install express body-parser authenticate-pam http-proxy @google/genai
 
-# 5. Initialize VNC (TightVNC)
-# Run once to set password, then kill to let the service handle it
-vncserver :1
-vncserver -kill :1
-
-# 6. Create Persistent SystemD Service
-cat <<EOF > /etc/systemd/system/rtechmanager.service
+5. CONFIGURE SYSTEMD SERVICE
+sudo tee /etc/systemd/system/rtechmanager.service > /dev/null <<EOF
 [Unit]
-Description=rTechManager Production Dashboard
+Description=rTechManager Server
 After=network.target
 
 [Service]
@@ -38,23 +32,16 @@ User=root
 WorkingDirectory=/opt/rtechmanager
 ExecStart=/usr/bin/node server.js
 Restart=on-failure
-Environment=NODE_ENV=production
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-# 7. Enable Ports
-ufw allow 1783/tcp
-ufw allow 1783/udp
+6. ACTIVATE
+sudo systemctl daemon-reload
+sudo systemctl enable rtechmanager
+sudo systemctl restart rtechmanager
 
-
-# 8. Launch
-systemctl daemon-reload
-systemctl enable rtechmanager
-systemctl start rtechmanager
-
-echo "------------------------------------------------"
-echo "INSTALL COMPLETE"
-echo "Access at: http://$(hostname -I | cut -d' ' -f1):1783"
-echo "------------------------------------------------"
+7. VNC BRIDGE
+vncserver :1
+nohup websockify --web /usr/share/novnc/ 6080 localhost:5901 &

@@ -1,0 +1,27 @@
+# rTechManager - Troubleshooting Guide
+
+1. FIX "UNSUPPORTED ENGINE" (UPGRADE NODE)
+# Run these to get Node 22 (LTS):
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt-get install -y nodejs
+# Verify it now says v22.x.x:
+node -v
+
+2. REBUILD NATIVE MODULES
+# After upgrading Node, you must rebuild modules like 'authenticate-pam':
+cd /opt/rtechmanager
+sudo rm -rf node_modules
+sudo npm install
+
+3. MANUAL DEBUGGING
+# Run the server directly to see the exact crash line:
+sudo node server.js
+
+4. PAM AUTH FAILURES
+# If user login fails but password is correct, ensure 'libpam0g-dev' is installed:
+sudo apt install libpam0g-dev
+
+5. FIREWALL CHECK
+# If "This site can't be reached" persists:
+sudo ufw allow 1783/tcp
+sudo ufw allow 6080/tcp
