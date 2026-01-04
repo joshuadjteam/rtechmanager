@@ -11,31 +11,40 @@ const server = http.createServer(app);
 const port = 1783;
 
 app.use(bodyParser.json());
+
+// Serve the frontend build
+// Note: In a real deployment, you'd run 'npm run build' first
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// REAL LINUX AUTHENTICATION
+// SYSTEM ACCOUNT AUTHENTICATION
 app.post('/api/auth/login', (req, res) => {
   const { username, password } = req.body;
   
-  // PAM auth checks the actual Linux system accounts
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Credentials required' });
+  }
+
+  // PAM.authenticate checks the /etc/passwd and /etc/shadow files
   pam.authenticate(username, password, (err) => {
     if (err) {
-      console.log(`Auth failed for user: ${username}`);
+      console.error(`FAILED: Auth attempt for user [${username}]`);
       return res.status(401).json({ error: 'Invalid system credentials' });
     }
-    console.log(`User ${username} authenticated successfully`);
+    
+    console.log(`SUCCESS: User [${username}] authorized via PAM`);
     res.json({ 
       username, 
       isRoot: username === 'root',
-      token: 'system-session-' + Date.now() 
+      node: process.version,
+      platform: process.platform
     });
   }, { serviceName: 'login', remoteHost: 'localhost' });
 });
 
-// VNC PROXY (Websockify logic)
-// Forwards /vnc websocket requests to local TightVNC port 5900
+// VNC WEBSOCKET PROXY
+// Maps browser websockets on port 1783/vnc to local VNC on 5901
 const proxy = createProxyServer({
-  target: 'ws://localhost:5900',
+  target: 'ws://localhost:5901',
   ws: true
 });
 
@@ -46,5 +55,5 @@ server.on('upgrade', (req, socket, head) => {
 });
 
 server.listen(port, () => {
-  console.log(`rTechManager backend active on http://localhost:${port}`);
+  console.log(`rTechManager ACTIVE: http://localhost:${port}`);
 });

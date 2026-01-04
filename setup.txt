@@ -1,35 +1,35 @@
+# rTechManager - Universal Linux Deployment (Debian/Ubuntu/Mint)
+# NO-GIT ONLINE INSTALLATION
 
-# rTechManager - Linux Mint Deployment Guide (No Git)
-# Port: 1783 | VNC: 5900
+# 1. Elevate to root
+sudo su
 
-1. INSTALL DEPENDENCIES
-sudo apt update
-sudo apt install -y nodejs npm tightvncserver websockify build-essential libpam0g-dev
+# 2. Install System Dependencies
+# libpam0g-dev is CRITICAL for system account authentication
+apt update
+apt install -y nodejs npm tightvncserver websockify build-essential libpam0g-dev wget unzip
 
-2. INITIALIZE VNC
-# Set a VNC password when prompted
-vncserver
-vncserver -kill :1
-
-3. CREATE PROJECT DIRECTORY
-sudo mkdir -p /opt/rtechmanager
-sudo chown $USER:$USER /opt/rtechmanager
+# 3. Download Source via GitHub ZIP (No Git needed)
+mkdir -p /opt/rtechmanager
 cd /opt/rtechmanager
+wget https://github.com/joshuadjteam/rtechmanager/archive/refs/heads/main.zip -O source.zip
+unzip -j source.zip
+rm source.zip
 
-4. DOWNLOAD FILES
-# Copy the server.js and the React build files to this directory.
-# If you are installing online, you can use:
-# curl -L https://github.com/joshuadjteam/rtechmanager/releases/latest/download/rtechmanager.zip -o rtech.zip
-# unzip rtech.zip
-
-5. INSTALL NODE MODULES
+# 4. Configure Backend
+# This builds the native PAM authentication modules
 npm init -y
 npm install express body-parser authenticate-pam http-proxy
 
-6. SETUP AUTO-START SERVICE
-sudo bash -c 'cat <<EOF > /etc/systemd/system/rtechmanager.service
+# 5. Initialize VNC (TightVNC)
+# Run once to set password, then kill to let the service handle it
+vncserver :1
+vncserver -kill :1
+
+# 6. Create Persistent SystemD Service
+cat <<EOF > /etc/systemd/system/rtechmanager.service
 [Unit]
-Description=rTechManager Server
+Description=rTechManager Production Dashboard
 After=network.target
 
 [Service]
@@ -38,14 +38,23 @@ User=root
 WorkingDirectory=/opt/rtechmanager
 ExecStart=/usr/bin/node server.js
 Restart=on-failure
+Environment=NODE_ENV=production
 
 [Install]
 WantedBy=multi-user.target
-EOF'
+EOF
 
-sudo systemctl daemon-reload
-sudo systemctl enable rtechmanager
-sudo systemctl start rtechmanager
+# 7. Enable Ports
+ufw allow 1783/tcp
+ufw allow 1783/udp
 
-7. ACCESS
-Open your browser to: http://your-server-ip:1783
+
+# 8. Launch
+systemctl daemon-reload
+systemctl enable rtechmanager
+systemctl start rtechmanager
+
+echo "------------------------------------------------"
+echo "INSTALL COMPLETE"
+echo "Access at: http://$(hostname -I | cut -d' ' -f1):1783"
+echo "------------------------------------------------"
