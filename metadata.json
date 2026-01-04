@@ -1,0 +1,8 @@
+{
+  "name": "rTechManager",
+  "description": "Production-grade Linux Mint server manager. Real VNC (noVNC), system auth, and Gemini-powered infrastructure monitoring.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

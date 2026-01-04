@@ -1,0 +1,51 @@
+
+# rTechManager - Linux Mint Deployment Guide (No Git)
+# Port: 1783 | VNC: 5900
+
+1. INSTALL DEPENDENCIES
+sudo apt update
+sudo apt install -y nodejs npm tightvncserver websockify build-essential libpam0g-dev
+
+2. INITIALIZE VNC
+# Set a VNC password when prompted
+vncserver
+vncserver -kill :1
+
+3. CREATE PROJECT DIRECTORY
+sudo mkdir -p /opt/rtechmanager
+sudo chown $USER:$USER /opt/rtechmanager
+cd /opt/rtechmanager
+
+4. DOWNLOAD FILES
+# Copy the server.js and the React build files to this directory.
+# If you are installing online, you can use:
+# curl -L https://github.com/joshuadjteam/rtechmanager/releases/latest/download/rtechmanager.zip -o rtech.zip
+# unzip rtech.zip
+
+5. INSTALL NODE MODULES
+npm init -y
+npm install express body-parser authenticate-pam http-proxy
+
+6. SETUP AUTO-START SERVICE
+sudo bash -c 'cat <<EOF > /etc/systemd/system/rtechmanager.service
+[Unit]
+Description=rTechManager Server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/rtechmanager
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF'
+
+sudo systemctl daemon-reload
+sudo systemctl enable rtechmanager
+sudo systemctl start rtechmanager
+
+7. ACCESS
+Open your browser to: http://your-server-ip:1783
