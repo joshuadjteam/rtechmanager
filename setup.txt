@@ -1,29 +1,33 @@
-# rTechManager - Clean Install Guide (Node 22 LTS)
-# Port: 1783 | OS: Linux Mint 22+
+# rTechManager - Full Production Setup
 
-1. UPGRADE TO NODE 22 (REQUIRED)
-# Mint's default repo usually has Node 18, which is too old for Gemini/Vite.
-sudo apt update
-sudo apt install -y curl
+1. UPGRADE NODE (MANDATORY)
 curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt install -y nodejs
+sudo apt update && sudo apt install -y nodejs
+node -v # Should say v22.x.x
 
-2. INSTALL OTHER SYSTEM DEPENDENCIES
-sudo apt install -y build-essential libpam0g-dev tightvncserver websockify
+2. SYSTEM DEPENDENCIES
+sudo apt install -y build-essential libpam0g-dev tightvncserver websockify novnc
 
-3. PREPARE DIRECTORY
+3. DIRECTORY & PERMISSIONS
 sudo mkdir -p /opt/rtechmanager
 sudo chown -R $USER:$USER /opt/rtechmanager
 cd /opt/rtechmanager
 
-4. INSTALL NODE PACKAGES
-# This will now succeed without engine warnings.
-npm install express body-parser authenticate-pam http-proxy @google/genai
+4. INSTALL & BUILD (THE FIX)
+# 1. Clean existing state
+rm -rf node_modules package-lock.json dist
+# 2. Install all dependencies (now includes Vite)
+npm install
+# 3. Generate the UI 'dist' folder
+npm run build 
 
-5. CONFIGURE SYSTEMD SERVICE
+5. CONFIGURE VNC
+vncpasswd # Set your remote desktop password
+
+6. SERVICE CONFIG
 sudo tee /etc/systemd/system/rtechmanager.service > /dev/null <<EOF
 [Unit]
-Description=rTechManager Server
+Description=rTechManager Automated Server
 After=network.target
 
 [Service]
@@ -32,16 +36,16 @@ User=root
 WorkingDirectory=/opt/rtechmanager
 ExecStart=/usr/bin/node server.js
 Restart=on-failure
+Environment=NODE_ENV=production
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-6. ACTIVATE
+7. START
 sudo systemctl daemon-reload
 sudo systemctl enable rtechmanager
 sudo systemctl restart rtechmanager
 
-7. VNC BRIDGE
-vncserver :1
-nohup websockify --web /usr/share/novnc/ 6080 localhost:5901 &
+8. DEBUGGING
+sudo journalctl -u rtechmanager -n 50 --no-pager

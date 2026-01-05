@@ -1,27 +1,27 @@
-# rTechManager - Troubleshooting Guide
+# rTechManager - Troubleshooting
 
-1. FIX "UNSUPPORTED ENGINE" (UPGRADE NODE)
-# Run these to get Node 22 (LTS):
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt-get install -y nodejs
-# Verify it now says v22.x.x:
-node -v
+1. THE "REAL" ERROR MESSAGE
+# If systemctl start fails, the reason is here:
+sudo journalctl -u rtechmanager -e
 
-2. REBUILD NATIVE MODULES
-# After upgrading Node, you must rebuild modules like 'authenticate-pam':
+2. DIST FOLDER MISSING
+# If the website shows a white screen or 404:
 cd /opt/rtechmanager
-sudo rm -rf node_modules
-sudo npm install
+npm run build
+# Ensure a 'dist' folder now exists with index.html inside.
 
-3. MANUAL DEBUGGING
-# Run the server directly to see the exact crash line:
-sudo node server.js
+3. VNC PASSWORD PROMPT
+# If VNC fails to start in background, it's usually waiting for a password.
+# Run this as root:
+sudo vncpasswd
 
-4. PAM AUTH FAILURES
-# If user login fails but password is correct, ensure 'libpam0g-dev' is installed:
-sudo apt install libpam0g-dev
+4. NODE VERSION MISMATCH
+# If you see "Unsupported engine" or "Module did not self-register":
+node -v 
+# If not v22, follow Step 1 in setup.txt.
+# Then run: rm -rf node_modules && npm install
 
-5. FIREWALL CHECK
-# If "This site can't be reached" persists:
-sudo ufw allow 1783/tcp
-sudo ufw allow 6080/tcp
+5. KILLING ZOMBIE PROCESSES
+# If port 1783 is already in use:
+sudo fuser -k 1783/tcp
+sudo systemctl restart rtechmanager
