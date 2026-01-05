@@ -5,7 +5,7 @@ const fs = require('fs');
 
 /**
  * rTechManager - Core Server
- * Handles: System Auth, Static UI, VNC Proxy, and Background Service Management
+ * Specifically tuned for Linux Mint / Debian environments.
  */
 
 try {
@@ -29,26 +29,32 @@ try {
   const bootstrapServices = () => {
     try {
       // 1. Ensure VNC Server is running on :1 (Port 5901)
-      const vncCheck = spawnSync('pgrep', ['-f', 'Xtightvnc']);
+      // On Mint, the process might be 'Xtightvnc' or just 'vncserver'
+      const vncCheck = spawnSync('pgrep', ['-f', 'Xtightvnc|vncserver']);
       if (vncCheck.status !== 0) {
-        console.log('[rTech] Starting TightVNC Server on :1...');
-        const vnc = spawn('vncserver', [':1'], { detached: true, stdio: 'ignore' });
+        console.log('[rTech] Starting TightVNC Server on :1 (Display)...');
+        // We use -geometry 1280x720 for optimal web streaming
+        const vnc = spawn('vncserver', [':1', '-geometry', '1280x720', '-depth', '24'], { 
+          detached: true, 
+          stdio: 'ignore' 
+        });
         vnc.unref();
       } else {
-        console.log('[rTech] TightVNC Server detected (Active).');
+        console.log('[rTech] VNC Process detected.');
       }
 
       // 2. Ensure Websockify Bridge is running (Port 6080)
       const wsCheck = spawnSync('pgrep', ['-f', 'websockify']);
       if (wsCheck.status !== 0) {
         console.log('[rTech] Starting Websockify Bridge (6080 -> 5901)...');
+        // Mint/Debian installs novnc files to /usr/share/novnc/
         const bridge = spawn('websockify', ['--web', '/usr/share/novnc/', '6080', 'localhost:5901'], {
           detached: true,
           stdio: 'ignore'
         });
         bridge.unref();
       } else {
-        console.log('[rTech] Websockify Bridge detected (Active).');
+        console.log('[rTech] Websockify Bridge detected.');
       }
     } catch (err) {
       console.error('[rTech] Bootstrap Warning:', err.message);
@@ -62,25 +68,24 @@ try {
   // Serve static UI from dist
   const distPath = path.join(__dirname, 'dist');
   if (!fs.existsSync(distPath)) {
-    console.error(`[rTech] ERROR: 'dist' folder not found at ${distPath}. Did you run 'npm run build'?`);
-    // Create a dummy index if it's missing to prevent crash, but warn heavily
+    console.error(`[rTech] ERROR: 'dist' folder not found at ${distPath}. Run 'npm run build' first.`);
     fs.mkdirSync(distPath, { recursive: true });
-    fs.writeFileSync(path.join(distPath, 'index.html'), '<h1>rTechManager: Please run "npm run build" to generate UI</h1>');
+    fs.writeFileSync(path.join(distPath, 'index.html'), '<h1>rTechManager: Building... Please refresh in 30 seconds.</h1>');
   }
 
   app.use(express.static(distPath));
 
-  // Authentication via System PAM
+  // Authentication via System PAM (Direct Mint User Auth)
   app.post('/api/auth/login', (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'Missing credentials' });
 
     pam.authenticate(username, password, (err) => {
       if (err) {
-        console.warn(`[rTech] Auth Failure for user: ${username}`);
+        console.warn(`[rTech] Auth Failure: ${username}`);
         return res.status(401).json({ error: 'System Authentication Failed' });
       }
-      console.log(`[rTech] Auth Success: ${username}`);
+      console.log(`[rTech] Session Initialized: ${username}`);
       res.json({ username, isRoot: username === 'root' || username === 'admin' });
     }, { serviceName: 'login', remoteHost: 'localhost' });
   });
@@ -96,19 +101,13 @@ try {
   });
 
   server.listen(port, host, () => {
-    console.log(`[rTech] Web UI ACTIVE on http://${host}:${port}`);
-    console.log(`[rTech] Infrastructure operational.`);
+    console.log(`[rTech] Listening on http://${host}:${port}`);
+    console.log(`[rTech] rTechManager v1.0.0 READY`);
   });
-
-  // Keep-alive logging for systemd visibility
-  setInterval(() => {
-    console.log(`[rTech] Heartbeat - Uptime: ${Math.floor(process.uptime())}s`);
-  }, 60000);
 
 } catch (e) {
   console.error('#########################################');
-  console.error('FATAL STARTUP ERROR:', e.message);
-  console.error('Check if all npm modules are installed.');
+  console.error('FATAL ERROR:', e.message);
   console.error('#########################################');
   process.exit(1);
 }
