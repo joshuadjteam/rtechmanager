@@ -1,12 +1,33 @@
 
-# rTechManager - Background Service Setup (Linux Mint)
+# rTechManager - UNIVERSAL ONE-COMMAND INFRASTRUCTURE BOOTSTRAP
 
-1. SYSTEMD SERVICE CREATION
-# Create a systemd service to run rTechManager in the background on startup
-sudo tee /etc/systemd/system/rtechmanager.service <<EOF
+Copy and paste the following block into your terminal as a root-level user (sudo -i).
+This installs Node.js, VNC Server, Websockify, Libvirt (for VMs), and sets up rTechManager as a system service.
+
+--------------------------------------------------------------------------------
+
+# 1. INSTALL SYSTEM DEPENDENCIES
+apt-get update && apt-get install -y \
+    curl build-essential python3-pip tightvncserver websockify \
+    libvirt-daemon-system libvirt-clients qemu-kvm iproute2 \
+    libpam0g-dev
+
+# 2. INSTALL NODE.JS 22 (LTS)
+curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+apt-get install -y nodejs
+
+# 3. CONFIGURE VNC (OPTIONAL: Manual password if not set)
+# su - youruser -c "vncpasswd"
+
+# 4. PREPARE APP
+npm install
+npm run build
+
+# 5. CREATE SYSTEMD SERVICE
+tee /etc/systemd/system/rtechmanager.service <<EOF
 [Unit]
-Description=rTechManager Server Console
-After=network.target
+Description=rTechManager Production Infrastructure Console
+After=network.target libvirtd.service
 
 [Service]
 Type=simple
@@ -21,17 +42,15 @@ Environment=API_KEY=${API_KEY}
 WantedBy=multi-user.target
 EOF
 
-2. ACTIVATE SERVICE
-sudo systemctl daemon-reload
-sudo systemctl enable rtechmanager
-sudo systemctl start rtechmanager
+# 6. ACTIVATE & START
+systemctl daemon-reload
+systemctl enable rtechmanager
+systemctl restart rtechmanager
 
-3. CHECK STATUS
-sudo systemctl status rtechmanager
+# 7. FINAL VERIFICATION
+systemctl status rtechmanager
 
-4. VNC SETUP (If prompted)
-# Ensure VNC password is set for the background service
-vncpasswd
+--------------------------------------------------------------------------------
 
-The app is now running in the background and will start automatically when your Linux Mint server boots.
-Access at: http://your-ip:1783
+The dashboard is now live at: http://your-server-ip:1783
+VNC relay is bridged automatically to Display :1 via port 6080 internally.

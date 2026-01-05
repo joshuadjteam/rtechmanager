@@ -47,3 +47,11 @@ export interface GroundingChunk {
     title: string;
   };
 }
+
+export interface VirtualMachine {
+  id: string;
+  name: string;
+  state: string;
+  cpu?: string;
+  memory?: string;
+}

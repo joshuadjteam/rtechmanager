@@ -9,6 +9,7 @@ import { Terminal } from './components/Terminal';
 import { UserManagement } from './components/UserManagement';
 import { Network } from './components/Network';
 import { Logs } from './components/Logs';
+import { VirtualMachines } from './components/VirtualMachines';
 import { RootShieldIcon, UsersGroupIcon } from './constants';
 
 const App: React.FC = () => {
@@ -54,19 +55,20 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white flex flex-col md:flex-row">
-      <nav className="w-full md:w-20 lg:w-64 bg-zinc-950 border-r border-white/5 flex md:flex-col items-center justify-around md:justify-start py-2 md:py-10 gap-0 md:gap-4 sticky top-0 h-16 md:h-screen z-50 order-2 md:order-1">
-        <div className="hidden md:flex w-12 h-12 bg-green-600 rounded-2xl items-center justify-center mb-8 italic font-black text-xl">rT</div>
+      <nav className="w-full md:w-20 lg:w-64 bg-zinc-950 border-r border-white/5 flex md:flex-col items-center justify-around md:justify-start py-2 md:py-10 gap-0 md:gap-3 sticky top-0 h-16 md:h-screen z-50 order-2 md:order-1 overflow-y-auto">
+        <div className="hidden md:flex w-12 h-12 bg-green-600 rounded-2xl items-center justify-center mb-8 italic font-black text-xl flex-shrink-0">rT</div>
         
         <NavItem mode={ViewMode.DASHBOARD} label="Stats" icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>} />
         <NavItem mode={ViewMode.REMOTE_DESKTOP} label="VNC Desktop" icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>} />
         <NavItem mode={ViewMode.TERMINAL} label="Terminal" icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>} />
+        <NavItem mode={ViewMode.VMS} label="VMs" icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>} />
         <NavItem mode={ViewMode.NETWORK} label="Networking" icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071a11 11 0 0115.556 0M2.121 8.828a17 17 0 0123.758 0" /></svg>} />
         <NavItem mode={ViewMode.LOGS} label="Logs" icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>} />
-        <NavItem mode={ViewMode.FILES} label="FS Explorer" icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>} />
+        <NavItem mode={ViewMode.FILES} label="Explorer" icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>} />
         <NavItem mode={ViewMode.USERS} label="Users" icon={<UsersGroupIcon />} />
         
         <div className="hidden md:block mt-auto pb-6">
-          <button onClick={handleLogout} className="p-4 text-red-500/50 hover:text-red-500"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg></button>
+          <button onClick={handleLogout} className="p-4 text-zinc-600 hover:text-red-500 transition-colors"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg></button>
         </div>
       </nav>
 
@@ -89,6 +91,7 @@ const App: React.FC = () => {
           {currentView === ViewMode.USERS && <UserManagement />}
           {currentView === ViewMode.NETWORK && <Network />}
           {currentView === ViewMode.LOGS && <Logs />}
+          {currentView === ViewMode.VMS && <VirtualMachines />}
         </div>
       </main>
     </div>
