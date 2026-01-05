@@ -1,20 +1,18 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# rTechManager
 
-# Run and deploy your AI Studio app
+Production-grade management console for Linux Mint servers.
 
-This contains everything you need to run your app locally.
+## Features
+- **Remote Desktop**: Real-time VNC relay via noVNC/Websockify.
+- **System Intelligence**: Gemini-powered performance analysis and health monitoring.
+- **Native Security**: System-level authentication via PAM (Pluggable Authentication Modules).
+- **Responsive UI**: High-fidelity dashboard built with React and Tailwind CSS.
 
-View your app in AI Studio: https://ai.studio/apps/drive/11T_v5ODrWtqvUKiRIYW_bVk0bax_MZAE
+## Quick Install
+Follow the steps in `setup.txt` to get started on your Linux Mint server in under 5 minutes.
 
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Technical Details
+- **Port**: 1783 (Web Console)
+- **VNC Display**: :1 (Localhost 5901)
+- **Websocket Bridge**: 6080
+- **Framework**: Node.js, Express, Vite, React

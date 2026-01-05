@@ -1,65 +1,18 @@
-# rTechManager - Linux Mint / Debian / Ubuntu Installation Guide
+# rTechManager - Simple Setup for Linux Mint
 
-1. PRE-REQUISITES & PROJECT DOWNLOAD
-# Update system and install Git
-sudo apt update && sudo apt install -y git
+1. INSTALL DEPENDENCIES (One-liner)
+sudo apt update && sudo apt install -y git nodejs npm build-essential libpam0g-dev tightvncserver websockify novnc
 
-# Create directory and clone the repository
-sudo mkdir -p /opt/rtechmanager
-sudo chown -R $USER:$USER /opt/rtechmanager
-cd /opt/rtechmanager
-git clone https://github.com/joshuadjteam/rtechmanager .
-
-2. UPGRADE NODE.JS (MANDATORY)
-# NodeSource setup for Node 22 (Current LTS)
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt update && sudo apt install -y nodejs
-node -v # MUST be v22.x.x
-
-3. SYSTEM DEPENDENCIES (DEBIAN/UBUNTU/MINT SPECIFIC)
-# build-essential & libpam0g-dev are required for system authentication compilation
-# tightvncserver & websockify provide the remote desktop backbone
-sudo apt install -y build-essential libpam0g-dev tightvncserver websockify novnc
-
-4. INSTALL & BUILD
-# Install Node dependencies (this compiles the PAM authentication module)
+2. DOWNLOAD & START (Copy-paste)
+git clone https://github.com/joshuadjteam/rtechmanager.git
+cd rtechmanager
 npm install
-# Compile the React Frontend into the 'dist' folder using Vite
-npm run build 
-
-5. CONFIGURE VNC (CRITICAL STEP)
-# You MUST set a VNC password or the background service will fail to start.
-# Run this command as the user who will own the process (usually root or your main user)
+npm run build
 vncpasswd
+sudo node server.js
 
-6. FIREWALL CONFIGURATION
-# Allow rTechManager web traffic through Mint's default firewall
+3. FIREWALL (Optional but recommended)
 sudo ufw allow 1783/tcp
-sudo ufw reload
 
-7. SYSTEMD SERVICE CONFIGURATION
-# This keeps the app running 24/7 and starts it on boot
-sudo tee /etc/systemd/system/rtechmanager.service > /dev/null <<EOF
-[Unit]
-Description=rTechManager Automated Server
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/opt/rtechmanager
-ExecStart=/usr/bin/node server.js
-Restart=on-failure
-Environment=NODE_ENV=production
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-8. ACTIVATE & START
-sudo systemctl daemon-reload
-sudo systemctl enable rtechmanager
-sudo systemctl restart rtechmanager
-
-9. VERIFY LOGS
-sudo journalctl -u rtechmanager -f
+Access: http://your-server-ip:1783
+Login: Use your Linux system username and password.
