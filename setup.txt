@@ -1,18 +1,23 @@
-# rTechManager - Simple Setup for Linux Mint
+# rTechManager - One-Click Setup for Linux Mint
 
-1. INSTALL DEPENDENCIES (One-liner)
-sudo apt update && sudo apt install -y git nodejs npm build-essential libpam0g-dev tightvncserver websockify novnc
+1. INSTALL DEPENDENCIES (Fixes the NPM conflict)
+# This installs Node 22 (which includes npm), build tools, and VNC components
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt update && sudo apt install -y git nodejs build-essential libpam0g-dev tightvncserver websockify novnc
 
-2. DOWNLOAD & START (Copy-paste)
+2. DEPLOY APPLICATION
 git clone https://github.com/joshuadjteam/rtechmanager.git
 cd rtechmanager
 npm install
 npm run build
+
+3. CONFIGURE & START
+# Set the password for your remote desktop session
 vncpasswd
+# Open the web port
+sudo ufw allow 1783/tcp
+# Launch the manager
 sudo node server.js
 
-3. FIREWALL (Optional but recommended)
-sudo ufw allow 1783/tcp
-
 Access: http://your-server-ip:1783
-Login: Use your Linux system username and password.
+Login: Your standard Linux Mint username and password.
