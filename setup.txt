@@ -1,32 +1,17 @@
 
-# rTechManager - UNIVERSAL ONE-COMMAND INFRASTRUCTURE BOOTSTRAP
+# rTechManager - Infrastructure Bootstrap
 
-Copy and paste the following block into your terminal as a root-level user (sudo -i).
-This installs Node.js, VNC Server, Websockify, Libvirt (for VMs), and sets up rTechManager as a system service.
+# 1. INSTALL DEPENDENCIES (One-line command as requested)
+sudo apt-get update && sudo apt-get install -y curl build-essential python3-pip tightvncserver websockify libvirt-daemon-system libvirt-clients qemu-kvm iproute2 libpam0g-dev && curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - && sudo apt-get install -y nodejs
 
---------------------------------------------------------------------------------
-
-# 1. INSTALL SYSTEM DEPENDENCIES
-apt-get update && apt-get install -y \
-    curl build-essential python3-pip tightvncserver websockify \
-    libvirt-daemon-system libvirt-clients qemu-kvm iproute2 \
-    libpam0g-dev
-
-# 2. INSTALL NODE.JS 22 (LTS)
-curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-apt-get install -y nodejs
-
-# 3. CONFIGURE VNC (OPTIONAL: Manual password if not set)
-# su - youruser -c "vncpasswd"
-
-# 4. PREPARE APP
+# 2. APP PREPARATION
 npm install
 npm run build
 
-# 5. CREATE SYSTEMD SERVICE
-tee /etc/systemd/system/rtechmanager.service <<EOF
+# 3. CREATE SYSTEMD SERVICE (Standard multi-line format)
+sudo tee /etc/systemd/system/rtechmanager.service <<EOF
 [Unit]
-Description=rTechManager Production Infrastructure Console
+Description=rTechManager Infrastructure Console
 After=network.target libvirtd.service
 
 [Service]
@@ -36,21 +21,14 @@ WorkingDirectory=$(pwd)
 ExecStart=/usr/bin/node server.js
 Restart=always
 Environment=NODE_ENV=production
-Environment=API_KEY=${API_KEY}
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-# 6. ACTIVATE & START
-systemctl daemon-reload
-systemctl enable rtechmanager
-systemctl restart rtechmanager
+# 4. ACTIVATE SERVICE
+sudo systemctl daemon-reload
+sudo systemctl enable rtechmanager
+sudo systemctl restart rtechmanager
 
-# 7. FINAL VERIFICATION
-systemctl status rtechmanager
-
---------------------------------------------------------------------------------
-
-The dashboard is now live at: http://your-server-ip:1783
-VNC relay is bridged automatically to Display :1 via port 6080 internally.
+echo "rTechManager is now LIVE at http://$(hostname -I | awk '{print $1}'):1783"

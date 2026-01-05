@@ -18,25 +18,27 @@ try {
   const port = 1783;
   const host = '0.0.0.0';
 
-  console.log(`[rTech] rTechManager v1.3 - Initializing Infrastructure`);
+  console.log(`[rTech] rTechManager v1.4 - Infrastructure Suite Active`);
 
   // --- AUTO-BOOTSTRAP VNC & WEBSOCKIFY ---
   const bootstrapServices = () => {
     try {
-      // 1. Start VNC Display :1 if not detected
-      const vncCheck = spawnSync('pgrep', ['-f', 'vncserver|Xtightvnc']);
+      const vncCheck = spawnSync('pgrep', ['-f', 'Xtightvnc|vncserver']);
       if (vncCheck.status !== 0) {
-        console.log('[rTech] VNC Backend offline. Attempting start...');
-        spawn('vncserver', [':1', '-geometry', '1280x720', '-depth', '24'], { detached: true, stdio: 'ignore' }).unref();
+        console.log('[rTech] Starting VNC Display :1...');
+        spawn('vncserver', [':1', '-geometry', '1280x720', '-depth', '24'], { 
+          detached: true, stdio: 'ignore', env: { ...process.env, USER: 'root' } 
+        }).unref();
       }
 
-      // 2. Start Websockify bridge if not detected
       const wsCheck = spawnSync('pgrep', ['-f', 'websockify']);
       if (wsCheck.status !== 0) {
-        console.log('[rTech] Websockify Bridge offline. Attempting start...');
-        spawn('websockify', ['--web', '/usr/share/novnc/', '6080', 'localhost:5901'], { detached: true, stdio: 'ignore' }).unref();
+        console.log('[rTech] Starting Websockify Bridge...');
+        spawn('websockify', ['--web', '/usr/share/novnc/', '6080', 'localhost:5901'], { 
+          detached: true, stdio: 'ignore' 
+        }).unref();
       }
-    } catch (e) { console.error('[rTech] Service Bootstrap Error:', e.message); }
+    } catch (e) { console.error('[rTech] Bootstrap Warning:', e.message); }
   };
   bootstrapServices();
 
@@ -44,7 +46,7 @@ try {
   const distPath = path.join(__dirname, 'dist');
   if (fs.existsSync(distPath)) app.use(express.static(distPath));
 
-  // --- API: STATS ---
+  // --- COCKPIT: SYSTEM STATS ---
   app.get('/api/system/stats', (req, res) => {
     try {
       const freeOut = execSync('free -b').toString().split('\n')[1].split(/\s+/);
@@ -59,30 +61,22 @@ try {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  // --- API: VIRTUAL MACHINES (Virsh) ---
+  // --- COCKPIT: VIRTUAL MACHINES (Libvirt) ---
   app.get('/api/system/vms', (req, res) => {
     try {
-      // Query virsh for all domains
       const virshOut = execSync('virsh list --all').toString().split('\n');
       const vms = virshOut
-        .slice(2) // Skip headers
+        .slice(2)
         .filter(line => line.trim().length > 0)
         .map(line => {
           const parts = line.trim().split(/\s{2,}/);
-          return {
-            id: parts[0] === '-' ? '' : parts[0],
-            name: parts[1],
-            state: parts[2]
-          };
+          return { id: parts[0] === '-' ? '' : parts[0], name: parts[1], state: parts[2] };
         });
       res.json(vms);
-    } catch (e) {
-      // Fallback if virsh is not installed
-      res.json([]);
-    }
+    } catch (e) { res.json([]); }
   });
 
-  // --- API: NETWORKING ---
+  // --- COCKPIT: NETWORKING ---
   app.get('/api/system/network', (req, res) => {
     try {
       const netJson = execSync('ip -j addr').toString();
@@ -90,20 +84,20 @@ try {
     } catch (e) {
       try {
         const netOut = execSync('ip addr show').toString();
-        res.json([{ ifname: 'Default', operstate: 'UP', link_type: 'ether' }]);
+        res.json([{ ifname: 'Default (Legacy)', operstate: 'UP', link_type: 'ether' }]);
       } catch(e2) { res.status(500).json({ error: e.message }); }
     }
   });
 
-  // --- API: LOGS ---
+  // --- COCKPIT: LOGS ---
   app.get('/api/system/logs', (req, res) => {
     try {
       const logs = execSync('journalctl -n 100 --no-pager').toString().split('\n').filter(l => l.trim());
       res.json(logs);
-    } catch (e) { res.json(["Journalctl access failed. Try running with sudo."]); }
+    } catch (e) { res.json(["Error: journalctl access failed. Verify permissions."]); }
   });
 
-  // --- API: INFO ---
+  // --- INFO & AUTH ---
   app.get('/api/system/info', (req, res) => {
     try {
       const osName = execSync('cat /etc/os-release | grep PRETTY_NAME').toString().split('=')[1].replace(/"/g, '').trim();
@@ -112,7 +106,7 @@ try {
         deviceName: os.hostname(),
         cpuModel,
         os: osName,
-        hddModel: "System Partition",
+        hddModel: "System Drive",
         ram: (os.totalmem() / (1024 ** 3)).toFixed(0) + 'GB'
       });
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -148,11 +142,12 @@ try {
   app.post('/api/auth/login', (req, res) => {
     const { username, password } = req.body;
     pam.authenticate(username, password, (err) => {
-      if (err) return res.status(401).json({ error: 'System PAM Rejection' });
+      if (err) return res.status(401).json({ error: 'System Authentication Denied' });
       res.json({ username, isRoot: username === 'root' });
     });
   });
 
+  // --- WEBSOCKET HANDLERS ---
   const vncProxy = createProxyServer({ target: 'ws://localhost:6080', ws: true });
   server.on('upgrade', (req, socket, head) => {
     const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
@@ -162,11 +157,14 @@ try {
       wss.handleUpgrade(req, socket, head, (ws) => {
         const shell = spawn('bash', ['-i'], { env: { ...process.env, TERM: 'xterm-256color' } });
         shell.stdout.on('data', (d) => ws.send(d.toString()));
+        shell.stderr.on('data', (d) => ws.send(d.toString()));
         ws.on('message', (m) => shell.stdin.write(m.toString()));
         ws.on('close', () => shell.kill());
       });
     }
   });
 
-  server.listen(port, host, () => console.log(`[rTech] Session active on port ${port}`));
-} catch (e) { console.error('CRASH:', e); process.exit(1); }
+  server.listen(port, host, () => {
+    console.log(`[rTech] Operational on http://${host}:${port}`);
+  });
+} catch (e) { console.error('FATAL SYSTEM ERROR:', e); process.exit(1); }
