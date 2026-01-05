@@ -1,18 +1,24 @@
 # rTechManager
 
-Production-grade management console for Linux Mint servers.
+Simple and powerful management console for Linux Mint servers.
 
 ## Features
-- **Remote Desktop**: Real-time VNC relay via noVNC/Websockify.
-- **System Intelligence**: Gemini-powered performance analysis and health monitoring.
-- **Native Security**: System-level authentication via PAM (Pluggable Authentication Modules).
-- **Responsive UI**: High-fidelity dashboard built with React and Tailwind CSS.
+- **Remote Desktop**: Direct VNC relay via noVNC/Websockify for full desktop control.
+- **Hardware Monitoring**: Real-time visualization of CPU, RAM, and Disk performance.
+- **System Administration**: Manage users, virtualization (KVM/QEMU), network interfaces, and system logs.
+- **Native Security**: Secure access using standard PAM (Linux System) authentication.
+- **Bash Terminal**: Fully interactive web-based terminal for command-line access.
 
-## Quick Install
-Follow the steps in `setup.txt` to get started on your Linux Mint server in under 5 minutes.
+## Quick Installation
+1. Install system dependencies (Git, Node.js, VNC, etc.) as listed in `setup.txt`.
+2. Clone the repository: `git clone https://github.com/joshuadjteam/rtechmanager`
+3. Enter the directory and install components: `npm install && npm run build`
+4. Start the server: `node server.js`
 
-## Technical Details
-- **Port**: 1783 (Web Console)
-- **VNC Display**: :1 (Localhost 5901)
-- **Websocket Bridge**: 6080
-- **Framework**: Node.js, Express, Vite, React
+## Technical Specifications
+- **Console Port**: 1783
+- **Authentication**: System-level PAM (Pluggable Authentication Modules)
+- **VNC Backend**: TightVNC on display :1
+- **WebSocket Bridge**: Websockify (Port 6080)
+- **Frontend**: React 19 + Tailwind CSS
+- **Backend**: Node.js + Express

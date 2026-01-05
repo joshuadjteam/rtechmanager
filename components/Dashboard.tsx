@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Gauge } from './Gauge';
 import { SystemStats } from '../types';
@@ -20,7 +19,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewScreen }) => {
         setStats(await res.json());
       }
     } catch (e) { 
-      console.error("Stats fetch failed", e); 
+      console.error("Hardware monitor link lost", e); 
     }
   };
 
@@ -38,15 +37,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewScreen }) => {
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-10 animate-in fade-in slide-in-from-top-4 duration-700">
+    <div className="max-w-6xl mx-auto space-y-10 animate-in fade-in duration-500">
       
-      {/* Heimdall Style Search Bar (Direct Google Search, NO AI) */}
+      {/* Infrastructure Search (Direct Google Link) */}
       <div className="relative z-10">
         <form onSubmit={handleSearch} className="relative group">
           <div className="absolute inset-0 bg-green-500/5 blur-3xl opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
           <input 
             type="text"
-            placeholder="Search Google..."
+            placeholder="Search Web for Linux Docs & Solutions..."
             className="w-full bg-zinc-900/60 border border-white/10 rounded-[2rem] py-6 px-8 pl-16 text-xl focus:outline-none focus:border-green-500/40 transition-all backdrop-blur-2xl shadow-2xl placeholder-zinc-700"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -65,7 +64,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewScreen }) => {
         </form>
       </div>
 
-      {/* Cockpit Style Stats */}
+      {/* Hardware Monitoring Gags */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
            <div className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] p-8 flex flex-col items-center justify-center backdrop-blur-sm">
@@ -79,7 +78,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewScreen }) => {
               <Gauge 
                 percentage={stats.cpuUsage} 
                 label="PROCESSOR" 
-                sublabelText={`${stats.cpuUsage.toFixed(1)}% LOAD`} 
+                sublabelText={`${stats.cpuUsage.toFixed(1)}% USAGE`} 
               />
            </div>
            <div className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] p-8 flex flex-col items-center justify-center backdrop-blur-sm">
@@ -105,14 +104,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewScreen }) => {
         </button>
       </div>
 
-      {/* Simple Status Footer */}
       <div className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] p-6 flex justify-between items-center backdrop-blur-sm px-10">
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">System Monitor Active</span>
+          <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Hardware Monitoring Online</span>
         </div>
         <div className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">
-          rTechManager v1.4.2 // Pure Hardware Mode
+          rTechManager // Mint Infrastructure Built
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 {
   "name": "rTechManager",
-  "description": "Production-grade Linux Mint server manager. Real VNC (noVNC), system auth, and Gemini-powered infrastructure monitoring.",
+  "description": "Simple and powerful Linux Mint server management console. Features VNC Remote Desktop, Bash Terminal, and Hardware Monitoring. No AI.",
   "requestFramePermissions": [
     "camera",
     "microphone"

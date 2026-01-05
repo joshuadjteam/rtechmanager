@@ -18,22 +18,25 @@ try {
   const port = 1783;
   const host = '0.0.0.0';
 
-  console.log(`[rTech] rTechManager v1.4 - Infrastructure Suite Active`);
+  console.log(`[rTech] rTechManager Infrastructure Console Active on Port ${port}`);
 
-  // --- AUTO-BOOTSTRAP VNC & WEBSOCKIFY ---
+  // --- AUTOMATED SERVICE BOOTSTRAP ---
   const bootstrapServices = () => {
     try {
+      // Check if VNC server is running on display :1
       const vncCheck = spawnSync('pgrep', ['-f', 'Xtightvnc|vncserver']);
       if (vncCheck.status !== 0) {
-        console.log('[rTech] Starting VNC Display :1...');
+        console.log('[rTech] Booting VNC Backend (:1)...');
+        // We run it as the current user (usually root in this setup)
         spawn('vncserver', [':1', '-geometry', '1280x720', '-depth', '24'], { 
           detached: true, stdio: 'ignore', env: { ...process.env, USER: 'root' } 
         }).unref();
       }
 
+      // Check if Websockify bridge is active
       const wsCheck = spawnSync('pgrep', ['-f', 'websockify']);
       if (wsCheck.status !== 0) {
-        console.log('[rTech] Starting Websockify Bridge...');
+        console.log('[rTech] Booting Websockify Bridge (6080 -> 5901)...');
         spawn('websockify', ['--web', '/usr/share/novnc/', '6080', 'localhost:5901'], { 
           detached: true, stdio: 'ignore' 
         }).unref();
@@ -46,7 +49,7 @@ try {
   const distPath = path.join(__dirname, 'dist');
   if (fs.existsSync(distPath)) app.use(express.static(distPath));
 
-  // --- COCKPIT: SYSTEM STATS ---
+  // --- API: HARDWARE STATS ---
   app.get('/api/system/stats', (req, res) => {
     try {
       const freeOut = execSync('free -b').toString().split('\n')[1].split(/\s+/);
@@ -61,7 +64,7 @@ try {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  // --- COCKPIT: VIRTUAL MACHINES (Libvirt) ---
+  // --- API: LIBVIRT VMs ---
   app.get('/api/system/vms', (req, res) => {
     try {
       const virshOut = execSync('virsh list --all').toString().split('\n');
@@ -76,28 +79,23 @@ try {
     } catch (e) { res.json([]); }
   });
 
-  // --- COCKPIT: NETWORKING ---
+  // --- API: NETWORK ---
   app.get('/api/system/network', (req, res) => {
     try {
       const netJson = execSync('ip -j addr').toString();
       res.json(JSON.parse(netJson));
-    } catch (e) {
-      try {
-        const netOut = execSync('ip addr show').toString();
-        res.json([{ ifname: 'Default (Legacy)', operstate: 'UP', link_type: 'ether' }]);
-      } catch(e2) { res.status(500).json({ error: e.message }); }
-    }
+    } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  // --- COCKPIT: LOGS ---
+  // --- API: LOGS ---
   app.get('/api/system/logs', (req, res) => {
     try {
       const logs = execSync('journalctl -n 100 --no-pager').toString().split('\n').filter(l => l.trim());
       res.json(logs);
-    } catch (e) { res.json(["Error: journalctl access failed. Verify permissions."]); }
+    } catch (e) { res.json(["Error: journalctl access failed."]); }
   });
 
-  // --- INFO & AUTH ---
+  // --- API: SYSTEM INFO ---
   app.get('/api/system/info', (req, res) => {
     try {
       const osName = execSync('cat /etc/os-release | grep PRETTY_NAME').toString().split('=')[1].replace(/"/g, '').trim();
@@ -106,12 +104,13 @@ try {
         deviceName: os.hostname(),
         cpuModel,
         os: osName,
-        hddModel: "System Drive",
+        hddModel: "System Partition",
         ram: (os.totalmem() / (1024 ** 3)).toFixed(0) + 'GB'
       });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // --- API: USERS ---
   app.get('/api/system/users', (req, res) => {
     try {
       const passwd = fs.readFileSync('/etc/passwd', 'utf8').split('\n');
@@ -126,6 +125,7 @@ try {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // --- API: FILE EXPLORER ---
   app.get('/api/fs/list', (req, res) => {
     const targetPath = req.query.path || '/';
     try {
@@ -139,6 +139,7 @@ try {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // --- API: SYSTEM AUTH ---
   app.post('/api/auth/login', (req, res) => {
     const { username, password } = req.body;
     pam.authenticate(username, password, (err) => {
@@ -147,7 +148,7 @@ try {
     });
   });
 
-  // --- WEBSOCKET HANDLERS ---
+  // --- WEBSOCKET BRIDGES (Terminal & VNC) ---
   const vncProxy = createProxyServer({ target: 'ws://localhost:6080', ws: true });
   server.on('upgrade', (req, socket, head) => {
     const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
@@ -165,6 +166,6 @@ try {
   });
 
   server.listen(port, host, () => {
-    console.log(`[rTech] Operational on http://${host}:${port}`);
+    console.log(`[rTech] Operational on port ${port}`);
   });
 } catch (e) { console.error('FATAL SYSTEM ERROR:', e); process.exit(1); }

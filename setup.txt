@@ -1,34 +1,30 @@
+# rTechManager - Simple Deployment Guide
 
-# rTechManager - Infrastructure Bootstrap
+This guide describes how to deploy the rTechManager console on your Linux Mint server.
 
-# 1. INSTALL DEPENDENCIES (One-line command as requested)
-sudo apt-get update && sudo apt-get install -y curl build-essential python3-pip tightvncserver websockify libvirt-daemon-system libvirt-clients qemu-kvm iproute2 libpam0g-dev && curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - && sudo apt-get install -y nodejs
+STEP 1: INSTALL CORE DEPENDENCIES
+Run these commands to prepare your system for the dashboard and remote desktop:
+sudo apt update
+sudo apt install -y git curl build-essential python3-pip tightvncserver websockify libvirt-daemon-system libvirt-clients qemu-kvm iproute2 libpam0g-dev
 
-# 2. APP PREPARATION
+STEP 2: INSTALL NODE.JS 22
+rTechManager requires the latest stable Node environment:
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
+
+STEP 3: CLONE THE REPOSITORY
+Use GIT to pull the source code directly to your server:
+git clone https://github.com/joshuadjteam/rtechmanager
+cd rtechmanager
+
+STEP 4: INSTALL PROJECT PACKAGES & BUILD
+Prepare the frontend and install the backend modules:
 npm install
 npm run build
 
-# 3. CREATE SYSTEMD SERVICE (Standard multi-line format)
-sudo tee /etc/systemd/system/rtechmanager.service <<EOF
-[Unit]
-Description=rTechManager Infrastructure Console
-After=network.target libvirtd.service
+STEP 5: RUN THE SERVER
+Launch the manager on port 1783:
+node server.js
 
-[Service]
-Type=simple
-User=root
-WorkingDirectory=$(pwd)
-ExecStart=/usr/bin/node server.js
-Restart=always
-Environment=NODE_ENV=production
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# 4. ACTIVATE SERVICE
-sudo systemctl daemon-reload
-sudo systemctl enable rtechmanager
-sudo systemctl restart rtechmanager
-
-echo "rTechManager is now LIVE at http://$(hostname -I | awk '{print $1}'):1783"
+The console is now accessible at http://your-server-ip:1783
+Log in using your existing Linux Mint username and password.
