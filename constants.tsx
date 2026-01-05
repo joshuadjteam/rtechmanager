@@ -1,14 +1,6 @@
 
 import React from 'react';
 
-export const SERVER_INFO = {
-  deviceName: 'Mint-Server-Production',
-  ram: '32GB DDR4',
-  hddModel: 'Foxaing 2TB NVMe SSD',
-  cpuModel: 'Intel Core i9-13900K @ 3.2GHz',
-  os: 'Linux Mint 22.1 (Xia)'
-};
-
 export const FolderIcon = () => (
   <svg className="w-8 h-8 text-green-500" fill="currentColor" viewBox="0 0 24 24">
     <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />

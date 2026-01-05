@@ -1,23 +1,37 @@
-# rTechManager - One-Click Setup for Linux Mint
 
-1. INSTALL DEPENDENCIES (Fixes the NPM conflict)
-# This installs Node 22 (which includes npm), build tools, and VNC components
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt update && sudo apt install -y git nodejs build-essential libpam0g-dev tightvncserver websockify novnc
+# rTechManager - Background Service Setup (Linux Mint)
 
-2. DEPLOY APPLICATION
-git clone https://github.com/joshuadjteam/rtechmanager.git
-cd rtechmanager
-npm install
-npm run build
+1. SYSTEMD SERVICE CREATION
+# Create a systemd service to run rTechManager in the background on startup
+sudo tee /etc/systemd/system/rtechmanager.service <<EOF
+[Unit]
+Description=rTechManager Server Console
+After=network.target
 
-3. CONFIGURE & START
-# Set the password for your remote desktop session
+[Service]
+Type=simple
+User=root
+WorkingDirectory=$(pwd)
+ExecStart=/usr/bin/node server.js
+Restart=always
+Environment=NODE_ENV=production
+Environment=API_KEY=${API_KEY}
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+2. ACTIVATE SERVICE
+sudo systemctl daemon-reload
+sudo systemctl enable rtechmanager
+sudo systemctl start rtechmanager
+
+3. CHECK STATUS
+sudo systemctl status rtechmanager
+
+4. VNC SETUP (If prompted)
+# Ensure VNC password is set for the background service
 vncpasswd
-# Open the web port
-sudo ufw allow 1783/tcp
-# Launch the manager
-sudo node server.js
 
-Access: http://your-server-ip:1783
-Login: Your standard Linux Mint username and password.
+The app is now running in the background and will start automatically when your Linux Mint server boots.
+Access at: http://your-ip:1783
